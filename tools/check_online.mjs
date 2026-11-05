@@ -20,7 +20,7 @@ let page;
 for (let i = 0; i < 80; i++) {
   try {
     const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
-    page = list.find((item) => item.type === "page" && decodeURIComponent(item.url).includes("127.0.0.1"));
+    page = list.find((item) => item.type === "page" && item.url !== "about:blank");
     if (page) break;
   } catch {}
   await sleep(250);
