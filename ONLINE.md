@@ -2,6 +2,8 @@
 
 在线版 = 同一套「天机三彩」界面 + **PWA 安装能力** + **GitHub Pages 自动更新**。
 
+当前已部署地址：<https://moying8723.github.io/sancai-oracle/>
+
 上线后：
 
 - 手机浏览器打开网址即可使用，不需要安装 APK；
@@ -96,7 +98,7 @@ https://<你的GitHub用户名>.github.io/<仓库名>/
   - 也可以在 Actions 页面手动 `Run workflow`；
   - 修改代码后如果希望立即更新，手动运行一次即可。
 - 流程：
-  1. `node tools/fetch_data.mjs`：抓取中国福彩官网 + 500彩票网历史开奖；
+  1. `node tools/fetch_data.mjs`：抓取 500彩票网开奖 XML / 开奖页；
   2. `node tools/build_single.mjs`：重建离线单文件；
   3. `node tools/build_online.mjs`：生成 `site/index.html` 和 PWA 资源；
   4. `node tools/engine.test.mjs`：1630+ 项引擎断言；
@@ -104,20 +106,18 @@ https://<你的GitHub用户名>.github.io/<仓库名>/
 
 开奖后通常 1 小时内更新。GitHub 的定时任务可能延迟，不是毫秒级实时。
 
-### 关于海外 Runner 的重要提醒
+### 关于数据源与网络
 
-GitHub Actions 的机器在海外。中国福彩官网 / 500彩票网如果限制海外 IP，抓取步骤会失败，站点会保留上一版数据（不会部署脏数据）。
+当前数据源是 **500彩票网开奖 XML**，不依赖福彩官网接口。已在 GitHub Actions 海外 Runner 实测：
 
-第一次部署后，请打开 Actions 日志确认：
+- `kaijiang.500.com/static/info/kaijiang/xml/{ssq,dlt,kl8}/list.xml` → HTTP 200；
+- `www.cwl.gov.cn` 官方接口 → HTTP 403（因此不作为自动更新来源）。
 
-- `Fetch latest official draw data` 成功；
-- `DATA AS OF ...` 打印出最新日期。
-
-如果失败，可选：
+如果上游改版或限流，抓取步骤会失败，站点保留上一版数据（不会部署脏数据）。可选兜底：
 
 1. **境内服务器方案**：在阿里云/腾讯云/自己电脑上每天运行 `fetch_data.mjs + build_single.mjs + build_online.mjs`，把 `site/` 发布到任意静态托管；
-2. **境内 CI**：使用 Gitee / 自建 Jenkins 等可访问境内官网的构建环境；
-3. **手动兜底**：在本机运行上述命令，再用 GitHub Desktop 把更新后的 `site/` 推上去。
+2. **境内 CI**：使用 Gitee / 自建 Jenkins 等构建环境；
+3. **手动兜底**：在本机运行上述命令，再用 GitHub Desktop 把更新后的文件推上去。
 
 ---
 
@@ -156,7 +156,7 @@ node tools/serve_online.mjs
 
 ### 自动更新
 
-在可以访问中国福彩/500彩票网的服务器上配置定时任务：
+在可以访问 500彩票网的服务器上配置定时任务：
 
 ```cron
 40 22 * * * cd /path/to/lottery-oracle && /usr/bin/node tools/fetch_data.mjs && /usr/bin/node tools/build_single.mjs && /usr/bin/node tools/build_online.mjs && cp -r site/* /var/www/sancai/
