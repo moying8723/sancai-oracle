@@ -1,5 +1,7 @@
 # 天机三彩 · 三彩种统计选号终端
 
+**在线版：** [https://moying8723.github.io/sancai-oracle/](https://moying8723.github.io/sancai-oracle/)
+
 一台可以离线运行的中文选号终端，覆盖 **超级大乐透**、**福彩双色球**、**快乐8** 三种玩法。
 
 它不做“必中”的承诺，而是把真实历史开奖、频率/遗漏/关联统计、结构过滤和号码美学，做成一个有质感的选号工作台。
@@ -87,10 +89,12 @@ node tools/serve_online.mjs
 
 ## 数据来源
 
-- 超级大乐透：[500彩票网历史开奖](https://datachart.500.com/dlt/history/)
-- 双色球、快乐8：[中国福利彩票发行管理中心公开接口](https://www.cwl.gov.cn/ygkj/wqkjgg/)
+- 三种彩种历史号码：[500彩票网开奖 XML](https://kaijiang.500.com/static/info/kaijiang/xml/dlt/list.xml)
+- 最新奖池 / 销量 / 头奖：[500彩票网开奖页](https://kaijiang.500.com/shtml/dlt/)
 
-数据在构建时抓取并内嵌，截止 **2026-11-05**。页面不会自动联网更新。
+数据在构建时抓取并内嵌，截止 **2026-11-05**。离线版不会自动联网；在线版由 GitHub Actions 每天开奖后自动重建。
+
+> 为什么不用福彩官网接口直接抓？GitHub Actions 海外机器访问 `cwl.gov.cn` 返回 403（已实测），而 500 彩票网 XML 在海外可正常访问。若上游改版，`tools/fetch_data.mjs` 需要同步调整。
 
 ### 更新数据
 
