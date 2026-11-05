@@ -1,0 +1,66 @@
+name: Auto Update & Deploy Pages
+
+# 每天开奖后自动抓取官方数据、重建页面并发布到 GitHub Pages。
+# 中国标准时间 22:40 / 23:40（UTC 14:40 / 15:40）。
+# GitHub 的定时任务可能延迟数分钟到数十分钟，属于“开奖后准实时更新”。
+on:
+  schedule:
+    - cron: "40 14 * * *"
+    - cron: "40 15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "github-pages"
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch latest official draw data
+        run: node tools/fetch_data.mjs
+
+      - name: Verify data is fresh
+        run: |
+          node -e "const d=require('./data.json'); const age=(Date.now()-new Date(d.meta.asOf+'T00:00:00+08:00'))/86400000; console.log('DATA AS OF', d.meta.asOf, '| age(days)', age.toFixed(2)); if (age > 7) { console.error('Fetched data is older than 7 days, refuse to deploy.'); process.exit(1); }"
+
+      - name: Rebuild offline app
+        run: node tools/build_single.mjs
+
+      - name: Build online PWA
+        run: node tools/build_online.mjs
+
+      - name: Verify engine and data
+        run: node tools/engine.test.mjs
+
+      - name: Print data cutoff
+        run: node -e "const d=require('./data.json'); console.log('DATA AS OF', d.meta.asOf, '| dlt', d.games.dlt.draws.length, '| ssq', d.games.ssq.draws.length, '| kl8', d.games.kl8.draws.length)"
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,52 @@
+name: Deploy Current Snapshot
+
+# 首次上线 / 紧急回滚使用：不联网抓取，直接使用仓库内的当前数据构建并发布。
+# 日常自动更新由 Auto Update & Deploy Pages 负责。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "github-pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Rebuild offline app
+        run: node tools/build_single.mjs
+
+      - name: Build online PWA
+        run: node tools/build_online.mjs
+
+      - name: Verify engine and data
+        run: node tools/engine.test.mjs
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

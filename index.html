@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-game="dlt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#06080d" />
+  <title>天机三彩 · 智能选号预测终端</title>
+  <meta name="description" content="基于真实历史开奖数据的超级大乐透、双色球、快乐8统计选号与结构分析终端。理性购彩，娱乐参考。" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307090f'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23d9b96b' stroke-width='1.4'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23d9b96b' stroke-width='.6' stroke-dasharray='2 4'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-family='KaiTi,serif' font-size='24' fill='%23e8cf8d'%3E天%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="boot-inner">
+      <div class="boot-seal"><span>天</span><i></i><i></i></div>
+      <div class="boot-title">天机三彩</div>
+      <div class="boot-sub">SANCAI ORACLE TERMINAL</div>
+      <div class="boot-line"><i></i></div>
+      <div class="boot-status">正在校准天机盘</div>
+    </div>
+  </div>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="天机三彩首页">
+        <span class="brand-seal"><span>天</span><i></i></span>
+        <span class="brand-copy">
+          <strong>天机三彩</strong>
+          <small>LOTTERY ORACLE</small>
+        </span>
+      </a>
+
+      <nav class="game-nav" id="game-nav" role="tablist" aria-label="彩种选择">
+        <button class="game-tab is-active" type="button" data-game="dlt" role="tab" aria-selected="true">
+          <span class="game-orb orb-dlt" aria-hidden="true"></span>
+          <span class="game-tab-copy"><b>大乐透</b><small>35 + 12</small></span>
+        </button>
+        <button class="game-tab" type="button" data-game="ssq" role="tab" aria-selected="false">
+          <span class="game-orb orb-ssq" aria-hidden="true"></span>
+          <span class="game-tab-copy"><b>双色球</b><small>33 + 16</small></span>
+        </button>
+        <button class="game-tab" type="button" data-game="kl8" role="tab" aria-selected="false">
+          <span class="game-orb orb-kl8" aria-hidden="true">8</span>
+          <span class="game-tab-copy"><b>快乐8</b><small>80 选 10</small></span>
+        </button>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="top-btn" type="button" id="btn-probability">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.8 2.1c-.9.6-1.4 1.1-1.4 2.1"/><path d="M12 17h.01"/></svg>
+          <span>概率公开</span>
+        </button>
+        <button class="top-btn saved-btn" type="button" id="btn-saved">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-3.7L6 21z"/></svg>
+          <span>我的号码</span>
+          <em id="saved-count">0</em>
+        </button>
+        <div class="clock" aria-label="当前时间">
+          <strong id="clock-time">--:--:--</strong>
+          <small id="clock-date">----</small>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="hero-glyph">彩</div>
+          <div class="hero-rings"><i></i><i></i><i></i></div>
+          <div class="hero-scan"></div>
+        </div>
+        <div class="hero-copy">
+          <div class="eyebrow">
+            <span class="live-dot"></span>
+            <span id="hero-en">SUPER LOTTO</span>
+            <span class="eyebrow-sep">/</span>
+            <span id="hero-issue">第 26126 期</span>
+            <span class="eyebrow-sep">/</span>
+            <span id="hero-draw-date">2026-11-04</span>
+          </div>
+          <h1>
+            <span class="hero-name" id="hero-name">超级大乐透</span>
+            <span class="hero-desc" id="hero-desc">前区 35 选 5 · 后区 12 选 2</span>
+          </h1>
+          <div class="hero-countdown">
+            <span class="countdown-k">下期开奖</span>
+            <strong id="hero-countdown">11月7日 · 周六</strong>
+            <span class="countdown-days" id="hero-days">还有 1 天</span>
+          </div>
+          <div class="hero-badges">
+            <span class="badge">历史样本 <b id="hero-samples">428</b> 期</span>
+            <span class="badge">数据截止 <b id="hero-asof">2026-11-04</b></span>
+            <span class="badge badge-warn"><i></i>统计选号不改变中奖概率</span>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <article class="stat-card">
+            <span class="stat-k">奖池滚存 <small>POOL</small></span>
+            <strong id="stat-pool">--</strong>
+            <em>上期结余</em>
+          </article>
+          <article class="stat-card">
+            <span class="stat-k">上期销量 <small>SALES</small></span>
+            <strong id="stat-sales">--</strong>
+            <em>全国总投注</em>
+          </article>
+          <article class="stat-card">
+            <span class="stat-k" id="stat-first-label">头奖注数 <small>JACKPOT</small></span>
+            <strong id="stat-first">--</strong>
+            <em id="stat-first-note">头奖明细</em>
+          </article>
+          <article class="stat-card">
+            <span class="stat-k">上期和值 <small>SUM</small></span>
+            <strong id="stat-sum">--</strong>
+            <em id="stat-sum-note">主区号码之和</em>
+          </article>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <aside class="panel controls-panel">
+          <div class="panel-head">
+            <span class="panel-index">01</span>
+            <h2>选号控制台</h2>
+            <span class="panel-en">CONSOLE</span>
+          </div>
+
+          <div class="control-section count-section">
+            <div class="control-label"><span>推演注数</span><small>BETS</small></div>
+            <div class="count-row">
+              <button type="button" class="round-btn" data-count-step="-1" aria-label="减少一注">−</button>
+              <strong id="count-value">1</strong>
+              <span class="count-unit">注</span>
+              <button type="button" class="round-btn" data-count-step="1" aria-label="增加一注">＋</button>
+              <div class="count-ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+
+          <div class="control-section" id="pick-section" hidden>
+            <div class="control-label"><span>快乐8 玩法</span><small>PICK</small></div>
+            <div class="pick-chips" id="pick-chips"></div>
+          </div>
+
+          <div class="control-section">
+            <div class="control-label"><span>推演策略</span><small>STRATEGY</small></div>
+            <div class="strategy-list" id="strategy-list" role="radiogroup" aria-label="推演策略"></div>
+          </div>
+
+          <div class="control-section sample-section">
+            <div class="control-label"><span>统计样本</span><small>WINDOW</small></div>
+            <div class="select-wrap">
+              <select id="window-select" aria-label="统计样本期数"></select>
+              <svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5"/></svg>
+            </div>
+          </div>
+
+          <div class="control-section">
+            <div class="control-label">
+              <span>结构过滤</span><small>FILTERS</small>
+              <button type="button" class="text-mini" id="reset-filters">重置</button>
+            </div>
+            <div class="toggle-grid" id="filter-toggles">
+              <label class="switch"><input type="checkbox" data-filter="odd" checked /><span class="switch-track"></span><span>奇偶均衡</span></label>
+              <label class="switch"><input type="checkbox" data-filter="size" checked /><span class="switch-track"></span><span>大小均衡</span></label>
+              <label class="switch"><input type="checkbox" data-filter="sum" checked /><span class="switch-track"></span><span>和值中枢</span></label>
+              <label class="switch"><input type="checkbox" data-filter="consecutive" checked /><span class="switch-track"></span><span>连号克制</span></label>
+              <label class="switch switch-wide"><input type="checkbox" data-filter="coverage" checked /><span class="switch-track"></span><span>三区覆盖</span></label>
+            </div>
+          </div>
+
+          <div class="control-section">
+            <div class="control-label">
+              <span>手动杀号</span><small>EXCLUDE</small>
+              <button type="button" class="text-mini" id="clear-excluded">清空</button>
+            </div>
+            <div class="excluded-box" id="excluded-box">
+              <span class="excluded-empty">点击右侧「号码温度」即可杀号</span>
+            </div>
+          </div>
+
+          <button class="generate-btn" type="button" id="btn-generate">
+            <span class="generate-shine" aria-hidden="true"></span>
+            <span class="generate-icon" aria-hidden="true">✦</span>
+            <span class="generate-copy"><b>天机推演</b><small>GENERATE ORACLE</small></span>
+            <span class="generate-arrow" aria-hidden="true">→</span>
+          </button>
+          <p class="control-foot">基于 <b id="foot-window">100</b> 期统计 · 只生成结构均衡的号码</p>
+        </aside>
+
+        <section class="panel stage-panel">
+          <div class="panel-head stage-head">
+            <span class="panel-index">02</span>
+            <h2>天机推演</h2>
+            <span class="panel-en">ORACLE OUTPUT</span>
+            <span class="stage-meta" id="stage-meta">第 26127 期 · 天机均衡</span>
+          </div>
+          <div class="stage-aura" aria-hidden="true"></div>
+          <div class="stage-watermark" aria-hidden="true">機</div>
+          <div class="ticket-area" id="ticket-area" aria-live="polite">
+            <div class="ticket-loading">
+              <span class="spinner"></span>
+              <p>正在排布天机</p>
+            </div>
+          </div>
+          <div class="stage-bottom">
+            <div class="radar-block">
+              <div class="mini-title">结构雷达 <span>STRUCTURE</span></div>
+              <div class="radar-chart" id="radar-chart"></div>
+            </div>
+            <div class="report-block">
+              <div class="mini-title">本注报告 <span>REPORT</span></div>
+              <div class="report-score"><strong id="report-score">--</strong><span>结构评分 / 100</span></div>
+              <div class="report-bars" id="report-bars"></div>
+              <p class="report-note" id="report-note">结构评分衡量号码分布均衡度，与中奖概率无关。</p>
+            </div>
+          </div>
+          <div class="stage-actions">
+            <button type="button" class="ghost-btn" id="btn-regenerate"><span aria-hidden="true">↻</span> 再推演一次</button>
+            <button type="button" class="ghost-btn" id="btn-copy"><span aria-hidden="true">⧉</span> 复制号码</button>
+            <button type="button" class="ghost-btn" id="btn-save"><span aria-hidden="true">♡</span> 收藏本组</button>
+            <button type="button" class="ghost-btn" id="btn-export"><span aria-hidden="true">↓</span> 保存图片</button>
+          </div>
+        </section>
+
+        <aside class="panel insight-panel">
+          <div class="panel-head">
+            <span class="panel-index">03</span>
+            <h2>数据罗盘</h2>
+            <span class="panel-en">COMPASS</span>
+          </div>
+          <div class="insight-body">
+            <div class="latest-card">
+              <div class="latest-head">
+                <span>上期开奖 <small>LAST DRAW</small></span>
+                <b id="latest-issue">第 26126 期</b>
+                <em id="latest-date">2026-11-04</em>
+              </div>
+              <div class="latest-balls" id="latest-balls"></div>
+              <div class="latest-foot">
+                <span>奖池 <b id="latest-pool">--</b></span>
+                <i></i>
+                <span>头奖 <b id="latest-first">--</b></span>
+              </div>
+            </div>
+
+            <div class="heat-section">
+              <div class="mini-title">号码温度 <span>HEATMAP</span><em>点击即杀号</em></div>
+              <div class="heatmap" id="heatmap"></div>
+              <div class="heat-legend">
+                <span>冷</span><i></i><span>热</span>
+                <em>格子下方为当前遗漏期数</em>
+              </div>
+            </div>
+
+            <div class="rank-section">
+              <div class="mini-title">冷热榜 <span>RANK</span><em>近 <b id="rank-window">100</b> 期</em></div>
+              <div class="rank-columns" id="rank-columns"></div>
+            </div>
+
+            <div class="insight-note">
+              <span class="insight-note-k">PROBABILITY NOTICE</span>
+              <p>彩票开奖独立随机，历史统计不构成预测。请理性购彩，量力而行。</p>
+              <button type="button" id="btn-insight-probability">阅读概率公开课 <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <section class="lower-grid">
+        <div class="panel trend-panel">
+          <div class="panel-head">
+            <span class="panel-index">04</span>
+            <h2>走势解构</h2>
+            <span class="panel-en">TREND</span>
+            <div class="trend-tabs" id="trend-tabs" role="tablist" aria-label="走势指标">
+              <button type="button" class="is-active" data-metric="sum" role="tab" aria-selected="true">和值</button>
+              <button type="button" data-metric="span" role="tab" aria-selected="false">跨度</button>
+              <button type="button" data-metric="odd" role="tab" aria-selected="false">奇数</button>
+              <button type="button" data-metric="repeat" role="tab" aria-selected="false">重号</button>
+            </div>
+            <span class="chart-window">近 50 期</span>
+          </div>
+          <div class="trend-chart-wrap">
+            <div class="trend-chart" id="trend-chart"></div>
+            <div class="chart-tooltip" id="trend-tooltip" hidden></div>
+          </div>
+          <div class="trend-stats" id="trend-stats"></div>
+        </div>
+
+        <div class="panel structure-panel">
+          <div class="panel-head">
+            <span class="panel-index">05</span>
+            <h2>结构密码</h2>
+            <span class="panel-en">PATTERN</span>
+          </div>
+          <div class="structure-list" id="structure-list"></div>
+        </div>
+      </section>
+
+      <section class="panel history-panel">
+        <div class="panel-head">
+          <span class="panel-index">06</span>
+          <h2>历史开奖</h2>
+          <span class="panel-en">ARCHIVE</span>
+          <div class="history-meta">
+            <span id="history-range">最近 10 期</span>
+            <button type="button" id="btn-more-history">展开更多 <span aria-hidden="true">↓</span></button>
+          </div>
+        </div>
+        <div class="history-table" id="history-table"></div>
+      </section>
+
+      <footer class="footer">
+        <div class="footer-top">
+          <div class="footer-brand">天机三彩 <span>·</span> SANCAI ORACLE</div>
+          <button type="button" class="footer-link" id="btn-about">数据与免责声明 <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="footer-line">本终端所有「推演、策略、评分」均为历史统计的艺术化表达，<b>不构成投注建议，不能提高中奖概率</b>。彩票开奖是独立随机事件，历史走势不代表未来。</p>
+        <p class="footer-meta">数据来源：中国福利彩票发行管理中心官网 · 500彩票网 <i></i> 数据截止 <span id="footer-asof">--</span> <i></i> 理性购彩 · 量力而行 · 未满 18 周岁禁止购彩</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- 概率公开课 -->
+  <div class="modal" id="modal-probability" hidden>
+    <div class="modal-veil" data-close-modal></div>
+    <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="prob-title">
+      <button type="button" class="modal-close" data-close-modal aria-label="关闭">×</button>
+      <div class="modal-head">
+        <span class="eyebrow"><span class="live-dot"></span>THE TRUTH · 概率公开课</span>
+        <h2 id="prob-title">彩票可以被「预测」吗？</h2>
+        <p>不能。但这不妨碍我们用统计学，把选号变成一件更有章法、也更有趣的事。</p>
+      </div>
+
+      <div class="odds-grid" id="odds-grid">
+        <article class="odd-card is-current" data-odd-game="dlt">
+          <span>超级大乐透 · 头奖</span>
+          <strong>1 / 21,425,712</strong>
+          <small>C(35,5) × C(12,2) = 21,425,712</small>
+        </article>
+        <article class="odd-card" data-odd-game="ssq">
+          <span>双色球 · 头奖</span>
+          <strong>1 / 17,721,088</strong>
+          <small>C(33,6) × 16 = 17,721,088</small>
+        </article>
+        <article class="odd-card" data-odd-game="kl8">
+          <span>快乐8 · 选十中十</span>
+          <strong>1 / 8,911,711</strong>
+          <small>C(20,10) / C(80,10) ≈ 1 / 8,911,711</small>
+        </article>
+      </div>
+
+      <div class="truth-grid">
+        <article class="truth-card"><b>01</b><h3>每期都是独立事件</h3><p>摇奖机没有记忆。上一期开出了什么，不会改变下一期任何一个号码被抽中的概率。</p></article>
+        <article class="truth-card"><b>02</b><h3>冷热只是统计投影</h3><p>在足够长的样本里，“热号”和“冷号”都会出现。它们描述过去，并不预言未来。</p></article>
+        <article class="truth-card"><b>03</b><h3>结构选号不是中奖算法</h3><p>本终端做的是：把号码分布得更均衡、更好看。它改变的是选号体验，不是中奖概率。</p></article>
+      </div>
+
+      <div class="lab-box">
+        <div class="lab-head">
+          <div>
+            <span class="lab-kicker">BACKTEST LAB</span>
+            <h3>策略回测实验室</h3>
+            <p>让历史自己说话：用当期之前的数据生成一注，再与真实开奖比对。</p>
+          </div>
+          <div class="lab-actions">
+            <span class="lab-game-pill" id="lab-game">超级大乐透 · 天机均衡</span>
+            <button type="button" class="gold-btn" id="btn-backtest">运行 60 期回测 <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+        <div class="lab-result" id="lab-result">
+          <div class="lab-placeholder">
+            <span class="lab-compass">◎</span>
+            <p>点击运行，看看「统计选号」在历史中究竟命中了多少。</p>
+            <small>回测只做概率科普，不构成任何投注建议。</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <span>概率数字为公开规则计算值。</span>
+        <span>数据来源：中国福利彩票发行管理中心 · 500彩票网</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据与免责声明 -->
+  <div class="modal" id="modal-about" hidden>
+    <div class="modal-veil" data-close-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <button type="button" class="modal-close" data-close-modal aria-label="关闭">×</button>
+      <div class="modal-head">
+        <span class="eyebrow">DATA & DISCLAIMER</span>
+        <h2 id="about-title">数据与免责声明</h2>
+        <p>一个可离线运行的统计选号小终端。所有数据与代码都留在本地。</p>
+      </div>
+      <div class="about-body">
+        <div class="about-block">
+          <h3>历史数据</h3>
+          <ul>
+            <li><b>超级大乐透：</b><span id="about-dlt">428 期 · 2024-01-01 → 2026-11-04</span></li>
+            <li><b>双色球：</b><span id="about-ssq">300 期 · 2024-11-12 → 2026-11-05</span></li>
+            <li><b>快乐8：</b><span id="about-kl8">400 期 · 2025-09-14 → 2026-11-05</span></li>
+          </ul>
+          <p>大乐透来自 500彩票网公开历史开奖页；双色球、快乐8 来自中国福利彩票发行管理中心公开接口。数据为构建时快照，不会自动联网更新。</p>
+        </div>
+        <div class="about-block">
+          <h3>算法说明</h3>
+          <ul>
+            <li>统计特征：出现频率、当前遗漏、近十期动能、与上期号码的共现关联。</li>
+            <li>六种策略：均衡、热号、冷号、黄金分割、关联共振、纯随机。</li>
+            <li>结构过滤：奇偶、大小、和值、连号、三区覆盖。</li>
+            <li>结构评分：对号码组合的分布均衡度打分，满分 100，<b>不代表中奖概率</b>。</li>
+          </ul>
+        </div>
+        <div class="about-block">
+          <h3>本地与隐私</h3>
+          <p>页面无外部字体、无追踪脚本、不向任何服务器发送请求。收藏与偏好保存在浏览器 localStorage 中，可随时清空。</p>
+        </div>
+        <div class="about-warning">
+          <strong>理性购彩提醒</strong>
+          <p>彩票是一种娱乐方式，不是投资工具。请量力而行，切勿沉迷。未满 18 周岁禁止购彩。若感觉无法控制购彩行为，请及时寻求帮助。</p>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span>天机三彩 · 本地离线版</span>
+        <span>仅供娱乐与统计学习</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏抽屉 -->
+  <div class="drawer" id="drawer-saved" hidden>
+    <div class="drawer-veil" data-close-drawer></div>
+    <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="saved-title">
+      <div class="drawer-head">
+        <div>
+          <span class="eyebrow">MY NUMBERS</span>
+          <h2 id="saved-title">我的号码 <em id="saved-drawer-count">0</em></h2>
+        </div>
+        <button type="button" class="modal-close" data-close-drawer aria-label="关闭">×</button>
+      </div>
+      <div class="saved-list" id="saved-list"></div>
+      <div class="drawer-foot">
+        <button type="button" class="text-btn" id="btn-clear-saved">清空全部收藏</button>
+        <span>仅保存在本机浏览器</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span class="toast-icon" aria-hidden="true">✦</span>
+    <span class="toast-text" id="toast-text"></span>
+  </div>
+
+  <noscript>
+    <div class="noscript">本终端需要启用 JavaScript 才能运行。</div>
+  </noscript>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
